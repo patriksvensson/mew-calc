@@ -16,6 +16,24 @@ impl char {
     }
 }
 
+impl i64 {
+    pub fn pow(exponent: i64) -> i64 {
+        let mut result = 1i64;
+        let mut base = self;
+        let mut left = exponent;
+        while left > 0 {
+            if left % 2 == 1 {
+                result *= base;
+            }
+
+            base *= base;
+            left /= 2;
+        }
+
+        return result;
+    }
+}
+
 pub interface Display {
     pub fn Display() -> string;
 }

@@ -8,13 +8,15 @@ use std;
 pub union Token {
     Integer(i64),
     Operator(OperatorInfo),
+    LParen,
+    RParen,
 }
 
 impl Token {
     pub fn is_operator() -> bool {
         return match self {
             .Integer(_) => false,
-            .Operator(_) => true,
+            _ => true,
         };
     }
 
@@ -36,10 +38,15 @@ impl Token {
 impl Display for Token {
     pub fn Display() -> string {
         return match self {
+            .LParen => "(",
+            .RParen => ")",
             .Integer(number) => $"{number}",
             .Operator(op) => match op.kind {
                 .Addition => "+",
                 .Subtraction => "-",
+                .Multiplication => "*",
+                .Division => "/",
+                .PowerOf => "^",
             },
         };
     }
@@ -49,22 +56,6 @@ pub type OperatorInfo {
     pub field kind: Operator;
     pub field precedence: u8;
     pub field is_left_associative: bool;
-
-    pub static fn addition() -> OperatorInfo {
-        return new OperatorInfo {
-            kind: Operator::Addition,
-            precedence: 2,
-            is_left_associative: true,
-        };
-    }
-
-    pub static fn subtraction() -> OperatorInfo {
-        return new OperatorInfo {
-            kind: Operator::Subtraction,
-            precedence: 2,
-            is_left_associative: true,
-        };
-    }
 }
 
 pub fn tokenize(text: string) -> Result<List<Token>, string> {
@@ -78,10 +69,45 @@ pub fn tokenize(text: string) -> Result<List<Token>, string> {
                     let number = parse_integer(stream);
                     result.add(Token::Integer(number));
                 } else if character == '+' {
-                    result.add(Token::Operator(OperatorInfo::addition()));
+                    result.add(Token::Operator(new OperatorInfo {
+                        kind: Operator::Addition,
+                        precedence: 2,
+                        is_left_associative: true,
+                    }));
                     stream.next();
                 } else if character == '-' {
-                    result.add(Token::Operator(OperatorInfo::subtraction()));
+                    result.add(Token::Operator(new OperatorInfo {
+                        kind: Operator::Subtraction,
+                        precedence: 2,
+                        is_left_associative: true,
+                    }));
+                    stream.next();
+                } else if character == '*' {
+                    result.add(Token::Operator(new OperatorInfo {
+                        kind: Operator::Multiplication,
+                        precedence: 3,
+                        is_left_associative: true,
+                    }));
+                    stream.next();
+                } else if character == '/' {
+                    result.add(Token::Operator(new OperatorInfo {
+                        kind: Operator::Division,
+                        precedence: 3,
+                        is_left_associative: true,
+                    }));
+                    stream.next();
+                } else if character == '^' {
+                    result.add(Token::Operator(new OperatorInfo {
+                        kind: Operator::PowerOf,
+                        precedence: 4,
+                        is_left_associative: false,
+                    }));
+                    stream.next();
+                } else if character == '(' {
+                    result.add(Token::LParen);
+                    stream.next();
+                } else if character == ')' {
+                    result.add(Token::RParen);
                     stream.next();
                 } else {
                     return .err($"Unexpected token '{character}'");
@@ -118,6 +144,31 @@ fn shunting_yard(tokens: List<Token>) -> List<Token> {
     let stack = Stack<Token>::new();
     for token in tokens {
         match token {
+            .LParen => stack.push(token),
+            .RParen => {
+                let mut found_left = false;
+                while !stack.is_empty() {
+                    match stack.last() {
+                        .some(t) => {
+                            match t {
+                                .LParen => { 
+                                    found_left = true;
+                                    break;
+                                },
+                                _ => { }
+                            }
+                        },
+                        _ => { }
+                    }
+                    result.add(stack.pop().unwrap());
+                }
+
+                if !found_left {
+                    panic("Missing left parenthesis in expression");
+                }
+                
+                stack.pop();
+            }
             .Integer(_) => result.add(token),
             .Operator(op) => {
                 while !stack.is_empty() {

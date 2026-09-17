@@ -5,6 +5,9 @@ namespace parsing;
 pub union Operator {
     Addition,
     Subtraction,
+    Multiplication,
+    Division,
+    PowerOf
 }
 
 pub interface Visitor {
@@ -51,7 +54,9 @@ impl Expression for ErrorExpression {
 pub fn parse(tokens: Enumerable<Token>) -> Result<Expression, string> {
     let mut stack = Stack<Expression>::new();
     for token in tokens {
-        match token {            
+        match token {   
+            .LParen => { /* Ignore */ },
+            .RParen => { /* Ignore */ }
             .Integer(value) => stack.push(new IntegerExpression { value: value }),
             .Operator(op) => { 
                 let right = stack.pop();

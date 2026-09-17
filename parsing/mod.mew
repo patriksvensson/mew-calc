@@ -15,6 +15,9 @@ impl Visitor for Evaluator {
         return match expr.operator {
                .Addition => left + right,
                .Subtraction => left - right,
+               .Multiplication => left * right,
+               .Division => left / right,
+               .PowerOf => left.pow(right),
         };
     }
 }
