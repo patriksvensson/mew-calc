@@ -116,7 +116,7 @@ pub fn tokenize(text: string) -> Result<List<Token>, string> {
         }
     }
 
-    return .ok(shunting_yard(result));
+    return shunting_yard(result);
 }
 
 fn parse_integer(stream: Peekable<char>) -> i64 {
@@ -139,7 +139,7 @@ fn parse_integer(stream: Peekable<char>) -> i64 {
     return std.convert.atoi(result).unwrap();
 }
 
-fn shunting_yard(tokens: List<Token>) -> List<Token> {
+fn shunting_yard(tokens: List<Token>) -> Result<List<Token>, string> {
     let result = List<Token>::new();
     let stack = Stack<Token>::new();
     for token in tokens {
@@ -164,9 +164,9 @@ fn shunting_yard(tokens: List<Token>) -> List<Token> {
                 }
 
                 if !found_left {
-                    panic("Missing left parenthesis in expression");
+                    return .err("Missing left parenthesis in expression");
                 }
-                
+
                 stack.pop();
             }
             .Integer(_) => result.add(token),
@@ -191,5 +191,5 @@ fn shunting_yard(tokens: List<Token>) -> List<Token> {
         result.add(stack.pop().unwrap());
     }
 
-    return result;
+    return .ok(result);
 }
