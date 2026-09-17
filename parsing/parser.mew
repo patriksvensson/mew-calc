@@ -1,0 +1,80 @@
+#load "lexer.mew"
+
+namespace parsing;
+
+pub union Operator {
+    Addition,
+    Subtraction,
+}
+
+pub interface Visitor {
+    fn visit_integer(expr: IntegerExpression) -> i64;
+    fn visit_arithmetic(expr: ArithmeticExpression) -> i64;
+}
+
+pub interface Expression {
+    fn accept(visitor: Visitor) -> i64;
+}
+
+pub type IntegerExpression {
+    pub field value: i64;
+}
+
+impl Expression for IntegerExpression {
+    fn accept(visitor: Visitor) -> i64 {
+        return visitor.visit_integer(self);
+    }
+}
+
+pub type ArithmeticExpression {
+    pub field operator: Operator;
+    pub field left: Expression;
+    pub field right: Expression;
+}
+
+impl Expression for ArithmeticExpression {
+    fn accept(visitor: Visitor) -> i64 {
+        return visitor.visit_arithmetic(self);
+    }
+}
+
+pub type ErrorExpression { 
+    pub field message: string;
+}
+
+impl Expression for ErrorExpression {
+    fn accept(visitor: Visitor) -> i64 {
+        std.panic(message);
+    }
+}
+
+pub fn parse(tokens: Enumerable<Token>) -> Result<Expression, string> {
+    let mut stack = Stack<Expression>::new();
+    for token in tokens {
+        match token {            
+            .Integer(value) => stack.push(new IntegerExpression { value: value }),
+            .Operator(op) => { 
+                let right = stack.pop();
+                if right.is_none() {
+                    return .err("Expected operand on stack");
+                }
+                let left = stack.pop();
+                if left.is_none() {
+                    return .err("Expected operand on stack");
+                }
+
+                stack.push(new ArithmeticExpression {
+                    operator: op.kind,
+                    left: left.unwrap(),
+                    right: right.unwrap(),
+                });
+            },
+        }
+    }
+
+    if stack.is_empty() {
+        return .err("Expected expression on stack but found none");
+    }
+
+    return .ok(stack.pop().unwrap());
+}

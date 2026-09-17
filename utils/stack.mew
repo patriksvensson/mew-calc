@@ -1,0 +1,72 @@
+#load "list.mew"
+
+pub type StackEnumerator<T> {
+    pub field items: List<T>;
+    pub mut field at: i32;
+}
+
+impl Enumerator<T> for StackEnumerator<T> {
+    pub fn next() -> bool {
+        self.at -= 1;
+        return self.at >= 0;
+    }
+
+    pub fn current() -> T {
+        return self.items.get(self.at);
+    }
+}
+
+pub type Stack<T> {
+    field items: List<T>;
+
+    pub static fn new() -> Stack<T> {
+        return new Stack<T> { items: List<T>::new() };
+    }
+
+    pub fn count() -> i32 {
+        return self.items.count();
+    }
+
+    pub fn is_empty() -> bool {
+        return self.items.is_empty();
+    }
+
+    pub fn push(value: T) {
+        self.items.add(value);
+    }
+
+    pub fn pop() -> Option<T> {
+        let top = self.items.last();
+        if top.is_some() {
+            self.items.removeAt(self.items.count() - 1);
+        }
+
+        return top;
+    }
+
+    pub fn peek() -> Option<T> {
+        return self.items.last();
+    }
+
+    pub fn first() -> Option<T> {
+        if self.is_empty() {
+            return .none;
+        }
+
+        return .some(self.items.get(0));
+    }
+
+    pub fn last() -> Option<T> {
+        return self.items.last();
+    }
+
+    pub fn clear() {
+        self.items.clear();
+    }
+}
+
+impl Enumerable<T> for Stack<T> {
+    pub fn iter() -> Enumerator<T> {
+        return new StackEnumerator<T> { items: self.items, at: self.items.count() };
+    }
+}

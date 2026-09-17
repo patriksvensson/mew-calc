@@ -1,0 +1,109 @@
+pub type ListEnumerator<T> {
+    pub field items: T[];
+    pub field length: i32;
+    pub mut field at: i32;
+
+    pub static fn over(items: T[], length: i32) -> ListEnumerator<T> {
+        return new ListEnumerator<T> { items: items, length: length, at: 0 - 1 };
+    }
+}
+
+impl Enumerator<T> for ListEnumerator<T> {
+    pub fn next() -> bool {
+        self.at += 1;
+        return self.at < self.length;
+    }
+
+    pub fn current() -> T {
+        return self.items[self.at];
+    }
+}
+
+pub type List<T> {
+    mut field items: T[];
+    mut field length: i32;
+
+    pub static fn new() -> List<T> {
+        return new List<T> { items: new T[4], length: 0 };
+    }
+
+    pub fn count() -> i32 {
+        return self.length;
+    }
+
+    pub fn is_empty() -> bool {
+        return self.length == 0;
+    }
+
+    pub fn add(value: T) {
+        if self.length == self.items.count {
+            self.reserve(self.length * 2);
+        }
+
+        self.items[self.length] = value;
+        self.length += 1;
+    }
+
+    pub fn get(index: i32) -> T {
+        return self.items[index];
+    }
+
+    pub fn last() -> Option<T> {
+        if self.is_empty() {
+            return .none;
+        }
+
+        return .some(self.items[self.length - 1]);
+    }
+
+    pub fn set(index: i32, value: T) {
+        self.items[index] = value;
+    }
+
+    pub fn removeAt(index: i32) {
+        let mut i = index;
+        while i < self.length - 1 {
+            self.items[i] = self.items[i + 1];
+            i += 1;
+        }
+
+        self.length -= 1;
+    }
+
+    pub fn clear() {
+        self.length = 0;
+    }
+
+    pub fn toArray() -> T[] {
+        let copy = new T[self.length];
+        let mut i = 0;
+        while i < self.length {
+            copy[i] = self.items[i];
+            i += 1;
+        }
+
+        return copy;
+    }
+
+    fn reserve(capacity: i32) {
+        let mut size = capacity;
+        if size < 4 {
+            size = 4;
+        }
+
+        let bigger = new T[size];
+        let mut i = 0;
+        while i < self.length {
+            bigger[i] = self.items[i];
+            i += 1;
+        }
+
+        self.items = bigger;
+    }
+}
+
+impl Enumerable<T> for List<T> {
+    pub fn iter() -> Enumerator<T> {
+        return ListEnumerator<T>::over(self.items, self.length) as Enumerator<T>;
+    }
+}

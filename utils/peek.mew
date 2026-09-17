@@ -1,0 +1,37 @@
+pub union PeekError {
+    Eof,
+}
+
+pub interface Peekable<T> {
+    pub fn peek() -> Result<T, PeekError>;
+    pub fn next() -> Result<T, PeekError>;
+}
+
+pub type Peeker<T> {
+    field source: Enumerator<T>;
+    mut field ahead: Option<T>;
+
+    pub static fn over(items: Enumerable<T>) -> Peeker<T> {
+        return new Peeker<T> { source: items.iter(), ahead: .none };
+    }
+
+    pub fn has_next() -> bool {
+        return self.peek().is_ok();
+    }
+}
+
+impl Peekable<T> for Peeker<T> {
+    pub fn peek() -> Result<T, PeekError> {
+        if self.ahead.is_none() && self.source.next() {
+            self.ahead = .some(self.source.current());
+        }
+
+        return self.ahead.ok_or(PeekError::Eof);
+    }
+
+    pub fn next() -> Result<T, PeekError> {
+        let item = self.peek();
+        self.ahead = .none;
+        return item;
+    }
+}

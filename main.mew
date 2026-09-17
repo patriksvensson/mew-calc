@@ -1,0 +1,10 @@
+#load "parsing/mod.mew"
+
+use std;
+use parsing;
+
+let result = evaluate("10-1-3+40");
+match result {    
+    .ok(value) => println($"The result is: {value}"),
+    .err(message) => panic(message),
+}

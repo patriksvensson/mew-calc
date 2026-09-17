@@ -1,0 +1,144 @@
+#load "../utils/mod.mew"
+#load "parser.mew"
+
+namespace parsing;
+
+use std;
+
+pub union Token {
+    Integer(i64),
+    Operator(OperatorInfo),
+}
+
+impl Token {
+    pub fn is_operator() -> bool {
+        return match self {
+            .Integer(_) => false,
+            .Operator(_) => true,
+        };
+    }
+
+    pub fn is_left_associative() -> bool {
+        return match self {
+            .Operator(op) => op.is_left_associative,
+            _ => false,
+        };
+    }
+
+    pub fn get_precedence() -> u8 {
+        return match self {
+            .Operator(op) => op.precedence,
+            _ => 0u8,
+        };
+    }
+}
+
+impl Display for Token {
+    pub fn Display() -> string {
+        return match self {
+            .Integer(number) => $"{number}",
+            .Operator(op) => match op.kind {
+                .Addition => "+",
+                .Subtraction => "-",
+            },
+        };
+    }
+}
+
+pub type OperatorInfo {
+    pub field kind: Operator;
+    pub field precedence: u8;
+    pub field is_left_associative: bool;
+
+    pub static fn addition() -> OperatorInfo {
+        return new OperatorInfo {
+            kind: Operator::Addition,
+            precedence: 2,
+            is_left_associative: true,
+        };
+    }
+
+    pub static fn subtraction() -> OperatorInfo {
+        return new OperatorInfo {
+            kind: Operator::Subtraction,
+            precedence: 2,
+            is_left_associative: true,
+        };
+    }
+}
+
+pub fn tokenize(text: string) -> Result<List<Token>, string> {
+    let result = List<Token>::new();
+    let stream = Peeker<char>::over(text.chars());
+    loop {
+        match stream.peek() {
+            .err(_) => { break; },
+            .ok(character) => {
+                if character.is_number() {
+                    let number = parse_integer(stream);
+                    result.add(Token::Integer(number));
+                } else if character == '+' {
+                    result.add(Token::Operator(OperatorInfo::addition()));
+                    stream.next();
+                } else if character == '-' {
+                    result.add(Token::Operator(OperatorInfo::subtraction()));
+                    stream.next();
+                } else {
+                    return .err($"Unexpected token '{character}'");
+                }
+            }
+        }
+    }
+
+    return .ok(shunting_yard(result));
+}
+
+fn parse_integer(stream: Peekable<char>) -> i64 {
+    let accumulator = List<char>::new();
+    loop {
+        match stream.peek() {
+            .err(_) => { break; },
+            .ok(c) => {
+                if c.is_number() {
+                    accumulator.add(c);
+                    stream.next();
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    let result = accumulator.toArray() as string;
+    return std.convert.atoi(result).unwrap();
+}
+
+fn shunting_yard(tokens: List<Token>) -> List<Token> {
+    let result = List<Token>::new();
+    let stack = Stack<Token>::new();
+    for token in tokens {
+        match token {
+            .Integer(_) => result.add(token),
+            .Operator(op) => {
+                while !stack.is_empty() {
+                    let item = stack.last().unwrap();
+                    let cond1 = item.is_operator() && item.get_precedence() > op.precedence;
+                    let cond2 = item.is_operator() && op.precedence == item.get_precedence() && item.is_left_associative();
+                    if cond1 || cond2 {
+                        result.add(stack.pop().unwrap());
+                    } else {
+                        break;
+                    }
+                }
+
+                stack.push(Token::Operator(op));
+            },
+        }
+    }
+
+    while !stack.is_empty() {
+        result.add(stack.pop().unwrap());
+    }
+
+    return result;
+}

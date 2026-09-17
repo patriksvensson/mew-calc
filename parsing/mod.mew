@@ -1,0 +1,41 @@
+#load "lexer.mew"
+#load "parser.mew"
+
+namespace parsing;
+
+type Evaluator { }
+impl Visitor for Evaluator {
+    fn visit_integer(expr: IntegerExpression) -> i64 {
+        return expr.value;
+    }
+
+    fn visit_arithmetic(expr: ArithmeticExpression) -> i64 {
+        let left = expr.left.accept(self);
+        let right = expr.right.accept(self);
+        return match expr.operator {
+               .Addition => left + right,
+               .Subtraction => left - right,
+        };
+    }
+}
+
+pub fn evaluate(text: string) -> Result<i64, string> {
+    if text.is_empty() {
+        return .ok(0);
+    }
+
+    let tokens = tokenize(text);
+    if tokens.is_err() {
+        return .err(tokens.err().unwrap());
+    }
+
+    let expr = parse(tokens.unwrap());
+    if(expr.is_err()) {
+        return .err(expr.err().unwrap());
+    }
+
+    let eval = new Evaluator { };
+    let result = expr.unwrap().accept(eval);
+
+    return .ok(result);
+}
