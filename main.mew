@@ -3,8 +3,21 @@
 use std;
 use parsing;
 
-let result = evaluate("(5*5+3)^2-84");
+let expression = read_expression();
+let result = evaluate(expression);
 match result {    
     .ok(value) => println($"The result is: {value}"),
     .err(message) => panic(message),
+}
+
+fn read_expression() -> string {
+    let args = System.Environment::GetCommandLineArgs();
+    if args.count > 1 {
+        // Get the first provided value
+        return args[1];
+    } else {
+        // Get expression from stdin
+        print("> ");
+        return System.Console::ReadLine();
+    }
 }
