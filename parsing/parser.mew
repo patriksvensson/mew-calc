@@ -59,20 +59,18 @@ pub fn parse(tokens: Enumerable<Token>) -> Result<Expression, string> {
             .RParen => { /* Ignore */ }
             .Integer(value) => stack.push(new IntegerExpression { value: value }),
             .Operator(op) => { 
-                let right = stack.pop();
-                if right.is_none() {
-                    return .err("Expected operand on stack");
-                }
-                let left = stack.pop();
-                if left.is_none() {
-                    return .err("Expected operand on stack");
+                if let .some(right) = stack.pop() {
+                    if let .some(left) = stack.pop() {
+                        stack.push(new ArithmeticExpression {
+                            operator: op.kind,
+                            left: left,
+                            right: right,
+                        });
+                        continue;
+                    }
                 }
 
-                stack.push(new ArithmeticExpression {
-                    operator: op.kind,
-                    left: left.unwrap(),
-                    right: right.unwrap(),
-                });
+                return .err("Expected operand on stack");
             },
         }
     }

@@ -1,10 +1,9 @@
 #load "parsing/mod.mew"
 
 use std;
-use parsing;
 
 let expression = read_expression();
-let result = evaluate(expression);
+let result = parsing.evaluate(expression);
 match result {    
     .ok(value) => println($"The result is: {value}"),
     .err(message) => panic(message),

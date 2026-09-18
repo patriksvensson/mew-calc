@@ -28,13 +28,13 @@ pub fn evaluate(text: string) -> Result<i64, string> {
     }
 
     let tokens = tokenize(text);
-    if tokens.is_err() {
-        return .err(tokens.err().unwrap());
+    if let .err(message) = tokens {
+        return .err(message);
     }
 
     let expr = parse(tokens.unwrap());
-    if(expr.is_err()) {
-        return .err(expr.err().unwrap());
+    if let .err(message) = expr {
+        return .err(message);
     }
 
     let eval = new Evaluator { };
