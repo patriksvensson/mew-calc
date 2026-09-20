@@ -27,18 +27,9 @@ pub fn evaluate(text: string) -> Result<i64, string> {
         return .ok(0);
     }
 
-    let tokens = tokenize(text);
-    if let .err(message) = tokens {
-        return .err(message);
-    }
-
-    let expr = parse(tokens.unwrap());
-    if let .err(message) = expr {
-        return .err(message);
-    }
+    let tokens = tokenize(text)?;
+    let expr = parse(tokens)?;
 
     let eval = new Evaluator { };
-    let result = expr.unwrap().accept(eval);
-
-    return .ok(result);
+    return .ok(expr.accept(eval));
 }
